@@ -18,6 +18,21 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\raster.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="inc\colour.h" />
+    <ClInclude Include="inc\GamesEngineeringBase.h" />
+    <ClInclude Include="inc\light.h" />
+    <ClInclude Include="inc\matrix.h" />
+    <ClInclude Include="inc\mesh.h" />
+    <ClInclude Include="inc\renderer.h" />
+    <ClInclude Include="inc\RNG.h" />
+    <ClInclude Include="inc\triangle.h" />
+    <ClInclude Include="inc\vec4.h" />
+    <ClInclude Include="inc\zbuffer.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -70,6 +85,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>..\Rasterizer\inc;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -127,21 +145,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="colour.h" />
-    <ClInclude Include="GamesEngineeringBase.h" />
-    <ClInclude Include="light.h" />
-    <ClInclude Include="matrix.h" />
-    <ClInclude Include="mesh.h" />
-    <ClInclude Include="renderer.h" />
-    <ClInclude Include="RNG.h" />
-    <ClInclude Include="triangle.h" />
-    <ClInclude Include="vec4.h" />
-    <ClInclude Include="zbuffer.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="raster.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
