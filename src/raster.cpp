@@ -20,6 +20,8 @@
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
 
+using namespace GamesEngineeringBase;
+
 // Main rendering function that processes a mesh, transforms its vertices, applies lighting, and draws triangles on the canvas.
 // Input Variables:
 // - renderer: The Renderer object used for drawing.
@@ -153,6 +155,9 @@ void scene1() {
     float zoffset = 8.0f; // Initial camera Z-offset
     float step = -0.1f;  // Step size for camera movement
 
+    // Initialize ImGui
+    ImGuiManager::Initialize(renderer.canvas.getHWND(), renderer.canvas.getDev(), renderer.canvas.getDevContext());
+
     auto start = std::chrono::high_resolution_clock::now();
     std::chrono::time_point<std::chrono::high_resolution_clock> end;
     int cycle = 0;
@@ -161,6 +166,13 @@ void scene1() {
     while (running) {
         renderer.canvas.checkInput();
         renderer.clear();
+
+        // Clear the render target
+        float ClearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f }; // RGBA
+        renderer.canvas.getDevContext()->ClearRenderTargetView(renderer.canvas.getRenderTargetView(), ClearColor);
+
+        // Draw scene geometry (before ImGui rendering)
+        renderer.canvas.getDevContext()->Draw(3, 0);
 
         camera = matrix::makeTranslation(0, 0, -zoffset); // Update camera position
 
@@ -182,6 +194,18 @@ void scene1() {
 
         for (auto& m : scene)
             render(renderer, m, camera, L);
+
+        // Start ImGui frame
+        ImGuiManager::BeginFrame();
+        ImGui::Begin("Controls");
+        ImGui::Text("Z-Offset:");
+        ImGui::SliderFloat("Camera Z", &zoffset, -60.f, 8.f);
+        ImGui::Text("Press ESC to exit.");
+        ImGui::End();
+
+        // End ImGui frame
+        ImGuiManager::EndFrame(); // Render ImGui UI after scene rendering
+
         renderer.present();
     }
 

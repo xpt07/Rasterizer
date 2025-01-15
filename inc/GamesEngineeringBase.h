@@ -37,6 +37,10 @@ SOFTWARE.
 #include <Xinput.h>
 #include <math.h>
 
+#include "imgui.h"
+#include "imgui_impl_dx11.h"
+#include "imgui_impl_win32.h"
+
 // Link necessary libraries
 #pragma comment(lib, "D3D11.lib")
 #pragma comment(lib, "D3DCompiler.lib")
@@ -50,6 +54,35 @@ namespace GamesEngineeringBase
 	// Macros to extract mouse coordinates from LPARAM
 #define CANVAS_GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
 #define CANVAS_GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+
+	class ImGuiManager {
+    public:
+        static void Initialize(HWND hwnd, ID3D11Device* device, ID3D11DeviceContext* context) {
+            ImGui::CreateContext();
+            ImGuiIO& io = ImGui::GetIO();
+            io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+            ImGui::StyleColorsDark();
+            ImGui_ImplWin32_Init(hwnd);
+            ImGui_ImplDX11_Init(device, context);
+        }
+
+        static void Shutdown() {
+            ImGui_ImplDX11_Shutdown();
+            ImGui_ImplWin32_Shutdown();
+            ImGui::DestroyContext();
+        }
+
+        static void BeginFrame() {
+            ImGui_ImplDX11_NewFrame();
+            ImGui_ImplWin32_NewFrame();
+            ImGui::NewFrame();
+        }
+
+        static void EndFrame() {
+            ImGui::Render();
+            ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+        }
+    };
 
 	// The Window class manages the creation and rendering of a window
 	class Window
@@ -205,6 +238,8 @@ namespace GamesEngineeringBase
 		}
 
 	public:
+		ID3D11RenderTargetView* getRenderTargetView() { return rtv; }
+
 		ID3D11DeviceContext* getDevContext() { return devcontext; }
 
 		ID3D11Device* getDev() { return dev; }
@@ -511,12 +546,12 @@ namespace GamesEngineeringBase
 			// Unmap the texture
 			devcontext->Unmap(tex, 0);
 
-			// Clear the render target view
-			float ClearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f }; // RGBA
-			devcontext->ClearRenderTargetView(rtv, ClearColor);
+			//// Clear the render target view
+			//float ClearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f }; // RGBA
+			//devcontext->ClearRenderTargetView(rtv, ClearColor);
 
-			// Draw the vertices
-			devcontext->Draw(3, 0);
+			//// Draw the vertices
+			//devcontext->Draw(3, 0);
 
 			// Present the swap chain
 			sc->Present(0, 0);
