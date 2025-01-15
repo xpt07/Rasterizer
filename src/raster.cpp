@@ -20,16 +20,6 @@
 #include "imgui_impl_dx11.h"
 #include "imgui_impl_win32.h"
 
-int currentScene = 0;
-bool running = true;
-float fps = 0.0f;
-std::chrono::time_point<std::chrono::high_resolution_clock> lastTime;
-
-void handleImGui(Renderer& renderer) {
-    //Start ImGui frame
-
-}
-
 // Main rendering function that processes a mesh, transforms its vertices, applies lighting, and draws triangles on the canvas.
 // Input Variables:
 // - renderer: The Renderer object used for drawing.
