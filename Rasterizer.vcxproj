@@ -101,7 +101,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>..\Rasterizer\inc;..\Rasterizer\imgui;$(IncludePath)</IncludePath>
+    <IncludePath>..\Rasterizer\inc;..\Rasterizer\imgui\backends;..\Rasterizer\imgui;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
