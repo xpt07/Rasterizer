@@ -205,6 +205,12 @@ namespace GamesEngineeringBase
 		}
 
 	public:
+		ID3D11DeviceContext* getDevContext() { return devcontext; }
+
+		ID3D11Device* getDev() { return dev; }
+
+		HWND getHWND() { return hwnd; }
+
 		// Creates and initializes the window
 		void create(unsigned int window_width, unsigned int window_height, const std::string window_name, float zoom = 1.0f, bool window_fullscreen = false, int window_x = 0, int window_y = 0)
 		{
