@@ -47,6 +47,8 @@ SOFTWARE.
 #pragma comment(lib, "WindowsCodecs.lib")
 #pragma comment(lib, "xinput.lib")
 
+extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 // Define the namespace to encapsulate the library's classes
 namespace GamesEngineeringBase
 {
@@ -114,6 +116,11 @@ namespace GamesEngineeringBase
 		// Static window procedure to handle window messages
 		static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
+
+			if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam)) {
+				return true; // Let ImGui handle the message if needed
+			}
+
 			Window* canvas = NULL;
 			if (msg == WM_CREATE)
 			{
