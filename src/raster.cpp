@@ -22,11 +22,7 @@
 
 using namespace GamesEngineeringBase;
 
-int scenesNum = 0;
-
-//void loadScenes();
-
-void handleImGui(Renderer& renderer){
+void handleImGui() {
 
     static auto start = std::chrono::high_resolution_clock::now();
     static auto end = std::chrono::high_resolution_clock::now();
@@ -35,24 +31,13 @@ void handleImGui(Renderer& renderer){
     float fps = 1000.0f / std::chrono::duration<double, std::milli>(end - start).count();
     start = end;
 
-    if (renderer.canvas.keyPressed(VK_LEFT)){
-        scenesNum -= 1;
-        //loadScenes();
-    }
-
-    if (renderer.canvas.keyPressed(VK_RIGHT)) {
-        scenesNum += 1;
-        //loadScenes();
-    }
-
     // Start ImGui frame
     ImGuiManager::BeginFrame();
-    ImGui::Begin("Controls");
+    ImGui::Begin("Info");
     ImGui::Text("FPS: %.1f", fps);
-    ImGui::End();
 
-    // End ImGui frame
-    ImGuiManager::EndFrame(); // Render ImGui UI after scene rendering
+    ImGui::End();
+    ImGuiManager::EndFrame();
 }
 
 // Main rendering function that processes a mesh, transforms its vertices, applies lighting, and draws triangles on the canvas.
@@ -99,8 +84,8 @@ void render(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
 
 // Test scene function to demonstrate rendering with user-controlled transformations
 // No input variables
-void sceneTest() {
-    Renderer renderer;
+void sceneTest(Renderer renderer) {
+
     // create light source {direction, diffuse intensity, ambient intensity}
     Light L{ vec4(0.f, 1.f, 1.f, 0.f), colour(1.0f, 1.0f, 1.0f), colour(0.1f, 0.1f, 0.1f) };
     // camera is just a matrix
@@ -121,9 +106,6 @@ void sceneTest() {
     float x = 0.0f, y = 0.0f, z = -4.0f; // Initial translation parameters
     mesh.world = matrix::makeTranslation(x, y, z);
     //mesh2.world = matrix::makeTranslation(x, y, z) * matrix::makeRotateX(0.01f);
-
-    // Initialize ImGui
-    ImGuiManager::Initialize(renderer.canvas.getHWND(), renderer.canvas.getDev(), renderer.canvas.getDevContext());
 
     // Main rendering loop
     while (running) {
@@ -154,7 +136,7 @@ void sceneTest() {
         for (auto& m : scene)
             render(renderer, m, camera, L);
 
-        handleImGui(renderer);
+        handleImGui();
 
         renderer.present(); // Display the rendered frame
     }
@@ -176,8 +158,8 @@ matrix makeRandomRotation() {
 
 // Function to render a scene with multiple objects and dynamic transformations
 // No input variables
-void scene1() {
-    Renderer renderer;
+void scene1(Renderer renderer) {
+    
     matrix camera;
     Light L{ vec4(0.f, 1.f, 1.f, 0.f), colour(1.0f, 1.0f, 1.0f), colour(0.1f, 0.1f, 0.1f) };
 
@@ -199,9 +181,6 @@ void scene1() {
 
     float zoffset = 8.0f; // Initial camera Z-offset
     float step = -0.1f;  // Step size for camera movement
-
-    // Initialize ImGui
-    ImGuiManager::Initialize(renderer.canvas.getHWND(), renderer.canvas.getDev(), renderer.canvas.getDevContext());
 
     auto start = std::chrono::high_resolution_clock::now();
     std::chrono::time_point<std::chrono::high_resolution_clock> end;
@@ -240,7 +219,7 @@ void scene1() {
         for (auto& m : scene)
             render(renderer, m, camera, L);
 
-        handleImGui(renderer);
+        handleImGui();
 
         renderer.present();
     }
@@ -251,8 +230,8 @@ void scene1() {
 
 // Scene with a grid of cubes and a moving sphere
 // No input variables
-void scene2() {
-    Renderer renderer;
+void scene2(Renderer renderer) {
+
     matrix camera = matrix::makeIdentity();
     Light L{ vec4(0.f, 1.f, 1.f, 0.f), colour(1.0f, 1.0f, 1.0f), colour(0.1f, 0.1f, 0.1f) };
 
@@ -282,9 +261,6 @@ void scene2() {
     float sphereOffset = -6.f;
     float sphereStep = 0.1f;
     sphere->world = matrix::makeTranslation(sphereOffset, 0.f, -6.f);
-
-    // Initialize ImGui
-    ImGuiManager::Initialize(renderer.canvas.getHWND(), renderer.canvas.getDev(), renderer.canvas.getDevContext());
 
     auto start = std::chrono::high_resolution_clock::now();
     std::chrono::time_point<std::chrono::high_resolution_clock> end;
@@ -323,7 +299,7 @@ void scene2() {
         for (auto& m : scene)
             render(renderer, m, camera, L);
 
-        handleImGui(renderer);
+        handleImGui();
 
         renderer.present();
     }
@@ -332,40 +308,16 @@ void scene2() {
         delete m;
 }
 
-//void loadScenes()
-//{
-//    switch (scenesNum)
-//    {
-//    case 0: scene1(); break;
-//    case 1: scene2(); break;
-//    case 2: sceneTest(); break;
-//    default:
-//        break;
-//    }
-//}
-
 // Entry point of the application
 // No input variables
 int main() {
 
-    //loadScenes();
-    
-    switch (scenesNum)
-    {
-    case 0: scene1(); break;
-    case 1: 
-        scene2(); 
-        break;
-    case 2: sceneTest(); break;
-    default:
-        scene1();
-        break;
-    }
+    Renderer renderer;
+    ImGuiManager::Initialize(renderer.canvas.getHWND(), renderer.canvas.getDev(), renderer.canvas.getDevContext());
 
-    // Uncomment the desired scene function to run
-    //scene1();
-    //scene2();
-    //sceneTest(); 
-   
+    scene1(renderer);
+    //scene2(renderer);
+    //sceneTest(renderer);
+
     return 0;
 }
