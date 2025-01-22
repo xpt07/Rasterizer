@@ -78,7 +78,7 @@ public:
         gamma = getC(vec2D(v[2].p), vec2D(v[0].p), p) / area;
 
         // Branchless check for barycentric coordinates
-        return (alpha >= 0.f) && (beta >= 0.f) && (gamma >= 0.f);
+        return (alpha >= 0.f) & (beta >= 0.f) & (gamma >= 0.f);
     }
 
     // Template function to interpolate values using barycentric coordinates
@@ -105,40 +105,31 @@ public:
         // Skip very small triangles
         if (area < 1.f) return;
 
-        // Iterate over the bounding box using loop unrolling
-        for (int y = (int)minV.y; y < (int)ceil(maxV.y); y++) {
-            for (int x = (int)minV.x; x + 3 < (int)ceil(maxV.x); x += 4) {
-                float alpha[4], beta[4], gamma[4];
-                vec2D points[4] = {
-                    vec2D((float)x, (float)y),
-                    vec2D((float)(x + 1), (float)y),
-                    vec2D((float)(x + 2), (float)y),
-                    vec2D((float)(x + 3), (float)y)
-                };
+        // Iterate over the bounding box and check each pixel
+        for (int y = (int)(minV.y); y < (int)ceil(maxV.y); y++) {
+            for (int x = (int)(minV.x); x < (int)ceil(maxV.x); x++) {
+                float alpha, beta, gamma;
 
-                bool inside[4];
-                for (int i = 0; i < 4; i++) {
-                    inside[i] = getCoordinates(points[i], alpha[i], beta[i], gamma[i]);
-                }
-
-                for (int i = 0; i < 4; i++) {
-                    if (inside[i]) {
-                        float depth = interpolate(beta[i], gamma[i], alpha[i], v[0].p[2], v[1].p[2], v[2].p[2]);
-                        if (renderer.zbuffer(x + i, y) > depth && depth > 0.01f) {
-                            colour c = interpolate(beta[i], gamma[i], alpha[i], v[0].rgb, v[1].rgb, v[2].rgb);
-                            c.clampColour();
-                            vec4 normal = interpolate(beta[i], gamma[i], alpha[i], v[0].normal, v[1].normal, v[2].normal);
-                            normal.normalise();
-
-                            L.omega_i.normalise();
-                            float dot = max(vec4::dot(L.omega_i, normal), 0.0f);
-                            colour a = (c * kd) * (L.L * dot + (L.ambient * kd));
-
-                            unsigned char r, g, b;
-                            a.toRGB(r, g, b);
-                            renderer.canvas.draw(x + i, y, r, g, b);
-                            renderer.zbuffer(x + i, y) = depth;
-                        }
+                // Check if the pixel lies inside the triangle
+                if (getCoordinates(vec2D((float)x, (float)y), alpha, beta, gamma)) {
+                    // Interpolate color, depth, and normals
+                    colour c = interpolate(beta, gamma, alpha, v[0].rgb, v[1].rgb, v[2].rgb);
+                    c.clampColour();
+                    float depth = interpolate(beta, gamma, alpha, v[0].p[2], v[1].p[2], v[2].p[2]);
+                    vec4 normal = interpolate(beta, gamma, alpha, v[0].normal, v[1].normal, v[2].normal);
+                    normal.normalise();
+                    // Perform Z-buffer test and apply shading
+                    if (renderer.zbuffer(x, y) > depth && depth > 0.01f) {
+                        // typical shader begin
+                        L.omega_i.normalise();
+                        float dot = max(vec4::dot(L.omega_i, normal), 0.0f);
+                        colour a = (c * kd) * (L.L * dot + (L.ambient * kd));
+                        // typical shader end
+                        unsigned char r, g, b;
+                        a.toRGB(r, g, b);
+                        renderer.canvas.draw(x, y, r, g, b);
+                        renderer.zbuffer(x, y) = depth;
+                        
                     }
                 }
             }
