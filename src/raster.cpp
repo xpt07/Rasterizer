@@ -211,7 +211,10 @@ void scene1() {
             step *= -1.f;
             if (++cycle % 2 == 0) {
                 end = std::chrono::high_resolution_clock::now();
-                std::cout << cycle / 2 << " :" << std::chrono::duration<double, std::milli>(end - start).count() << "ms\n";
+                std::cout << std::chrono::duration<double, std::milli>(end - start).count() << "\n";
+                if (cycle / 2 == 100) {
+                    std::cout << cycle / 2 << " done" << std::endl;
+                }
                 start = std::chrono::high_resolution_clock::now();
             }
         }
@@ -289,7 +292,10 @@ void scene2() {
             sphereStep *= -1.f;
             if (++cycle % 2 == 0) {
                 end = std::chrono::high_resolution_clock::now();
-                std::cout << cycle / 2 << " :" << std::chrono::duration<double, std::milli>(end - start).count() << "ms\n";
+                std::cout << std::chrono::duration<double, std::milli>(end - start).count() << "\n";
+                if (cycle / 2 == 100) {
+                    std::cout << cycle / 2 << " done" << std::endl;
+                }
                 start = std::chrono::high_resolution_clock::now();
             }
         }
