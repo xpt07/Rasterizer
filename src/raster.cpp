@@ -22,23 +22,23 @@
 
 using namespace GamesEngineeringBase;
 
-void handleImGui() {
-
-    static auto start = std::chrono::high_resolution_clock::now();
-    static auto end = std::chrono::high_resolution_clock::now();
-
-    end = std::chrono::high_resolution_clock::now();
-    float fps = 1000.0f / std::chrono::duration<double, std::milli>(end - start).count();
-    start = end;
-
-    // Start ImGui frame
-    ImGuiManager::BeginFrame();
-    ImGui::Begin("Info");
-    ImGui::Text("FPS: %.1f", fps);
-
-    ImGui::End();
-    ImGuiManager::EndFrame();
-}
+//void handleImGui() {
+//
+//    static auto start = std::chrono::high_resolution_clock::now();
+//    static auto end = std::chrono::high_resolution_clock::now();
+//
+//    end = std::chrono::high_resolution_clock::now();
+//    float fps = 1000.0f / std::chrono::duration<double, std::milli>(end - start).count();
+//    start = end;
+//
+//    // Start ImGui frame
+//    ImGuiManager::BeginFrame();
+//    ImGui::Begin("Info");
+//    ImGui::Text("FPS: %.1f", fps);
+//
+//    ImGui::End();
+//    ImGuiManager::EndFrame();
+//}
 
 // Main rendering function that processes a mesh, transforms its vertices, applies lighting, and draws triangles on the canvas.
 // Input Variables:
@@ -84,8 +84,8 @@ void render(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
 
 // Test scene function to demonstrate rendering with user-controlled transformations
 // No input variables
-void sceneTest(Renderer renderer) {
-
+void sceneTest() {
+    Renderer renderer;
     // create light source {direction, diffuse intensity, ambient intensity}
     Light L{ vec4(0.f, 1.f, 1.f, 0.f), colour(1.0f, 1.0f, 1.0f), colour(0.1f, 0.1f, 0.1f) };
     // camera is just a matrix
@@ -136,7 +136,7 @@ void sceneTest(Renderer renderer) {
         for (auto& m : scene)
             render(renderer, m, camera, L);
 
-        handleImGui();
+        //handleImGui();
 
         renderer.present(); // Display the rendered frame
     }
@@ -158,8 +158,8 @@ matrix makeRandomRotation() {
 
 // Function to render a scene with multiple objects and dynamic transformations
 // No input variables
-void scene1(Renderer renderer) {
-    
+void scene1() {
+    Renderer renderer;
     matrix camera;
     Light L{ vec4(0.f, 1.f, 1.f, 0.f), colour(1.0f, 1.0f, 1.0f), colour(0.1f, 0.1f, 0.1f) };
 
@@ -222,7 +222,7 @@ void scene1(Renderer renderer) {
         for (auto& m : scene)
             render(renderer, m, camera, L);
 
-        handleImGui();
+        //handleImGui();
 
         renderer.present();
     }
@@ -233,8 +233,8 @@ void scene1(Renderer renderer) {
 
 // Scene with a grid of cubes and a moving sphere
 // No input variables
-void scene2(Renderer renderer) {
-
+void scene2() {
+    Renderer renderer;
     matrix camera = matrix::makeIdentity();
     Light L{ vec4(0.f, 1.f, 1.f, 0.f), colour(1.0f, 1.0f, 1.0f), colour(0.1f, 0.1f, 0.1f) };
 
@@ -292,7 +292,7 @@ void scene2(Renderer renderer) {
             sphereStep *= -1.f;
             if (++cycle % 2 == 0) {
                 end = std::chrono::high_resolution_clock::now();
-                std::cout << std::chrono::duration<double, std::milli>(end - start).count();
+                std::cout << std::chrono::duration<double, std::milli>(end - start).count() << "\n";
                 if (cycle / 2 == 100) {
                     std::cout << cycle / 2 << " done" << std::endl;
                 }
@@ -305,7 +305,7 @@ void scene2(Renderer renderer) {
         for (auto& m : scene)
             render(renderer, m, camera, L);
 
-        handleImGui();
+        //handleImGui();
 
         renderer.present();
     }
@@ -318,12 +318,12 @@ void scene2(Renderer renderer) {
 // No input variables
 int main() {
 
-    Renderer renderer;
-    ImGuiManager::Initialize(renderer.canvas.getHWND(), renderer.canvas.getDev(), renderer.canvas.getDevContext());
+    //Renderer renderer;
+    //ImGuiManager::Initialize(renderer.canvas.getHWND(), renderer.canvas.getDev(), renderer.canvas.getDevContext());
 
-    scene1(renderer);
-    //scene2(renderer);
-    //sceneTest(renderer);
+    scene1();
+    //scene2();
+    //sceneTest();
 
     return 0;
 }
