@@ -47,20 +47,8 @@ public:
     // Clears the Z-buffer by setting all depth values to 1.0f,
     // which represents the farthest possible depth.
     void clear() {
-        unsigned int totalSize = width * height;
-        unsigned int i = 0;
-
-        // Unroll the loop for chunks of 4
-        for (; i + 3 < totalSize; i += 4) {
-            buffer[i] = 1.0f;
-            buffer[i + 1] = 1.0f;
-            buffer[i + 2] = 1.0f;
-            buffer[i + 3] = 1.0f;
-        }
-
-        // Handle any remaining elements
-        for (; i < totalSize; i++) {
-            buffer[i] = 1.0f;
+        for (unsigned int i = 0; i < width * height; i++) {
+            buffer[i] = 1.0f; // Reset each depth value
         }
     }
 
