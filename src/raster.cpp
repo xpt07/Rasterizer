@@ -316,19 +316,16 @@ void scene2() {
         // Move the sphere back and forth
         sphereOffset += sphereStep;
         sphere->world = matrix::makeTranslation(sphereOffset, 0.f, -6.f);
-
-        // Branchless sign flip for sphereStep
-        sphereStep *= 1.f - 2.f * (sphereOffset > 6.0f || sphereOffset < -6.0f);
-
-        // Cycle timing check
-        if (++cycle % 2 == 0) {
-            end = std::chrono::high_resolution_clock::now();
-            std::cout << std::chrono::duration<double, std::milli>(end - start).count() << "\n";
-
-            if (cycle / 2 == 100) {
-                std::cout << cycle / 2 << " done" << std::endl;
+        if (sphereOffset > 6.0f || sphereOffset < -6.0f) {
+            sphereStep *= -1.f;
+            if (++cycle % 2 == 0) {
+                end = std::chrono::high_resolution_clock::now();
+                std::cout << std::chrono::duration<double, std::milli>(end - start).count() << "\n";
+                if (cycle / 2 == 100) {
+                    std::cout << cycle / 2 << " done" << std::endl;
+                }
+                start = std::chrono::high_resolution_clock::now();
             }
-            start = std::chrono::high_resolution_clock::now();
         }
 
         if (renderer.canvas.keyPressed(VK_ESCAPE)) break;
