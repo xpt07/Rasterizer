@@ -158,21 +158,26 @@ public:
         };
 
         for (int i = 0; i < 6; ++i) {
-            int v0 = faceIndices[i][0];
-            int v1 = faceIndices[i][1];
-            int v2 = faceIndices[i][2];
-            int v3 = faceIndices[i][3];
+            int v0_1 = faceIndices[i][0], v1_1 = faceIndices[i][1], v2_1 = faceIndices[i][2], v3_1 = faceIndices[i][3];
+            int v0_2 = faceIndices[i + 1][0], v1_2 = faceIndices[i + 1][1], v2_2 = faceIndices[i + 1][2], v3_2 = faceIndices[i + 1][3];
 
-            // Add vertices with their normals
-            mesh.addVertex(positions[v0], normals[i]);
-            mesh.addVertex(positions[v1], normals[i]);
-            mesh.addVertex(positions[v2], normals[i]);
-            mesh.addVertex(positions[v3], normals[i]);
+            mesh.addVertex(positions[v0_1], normals[i]);
+            mesh.addVertex(positions[v1_1], normals[i]);
+            mesh.addVertex(positions[v2_1], normals[i]);
+            mesh.addVertex(positions[v3_1], normals[i]);
 
-            // Add two triangles for the face
-            int baseIndex = i * 4;
-            mesh.addTriangle(baseIndex, baseIndex + 2, baseIndex + 1);
-            mesh.addTriangle(baseIndex, baseIndex + 3, baseIndex + 2);
+            int baseIndex1 = i * 4;
+            mesh.addTriangle(baseIndex1, baseIndex1 + 2, baseIndex1 + 1);
+            mesh.addTriangle(baseIndex1, baseIndex1 + 3, baseIndex1 + 2);
+
+            mesh.addVertex(positions[v0_2], normals[i + 1]);
+            mesh.addVertex(positions[v1_2], normals[i + 1]);
+            mesh.addVertex(positions[v2_2], normals[i + 1]);
+            mesh.addVertex(positions[v3_2], normals[i + 1]);
+
+            int baseIndex2 = (i + 1) * 4;
+            mesh.addTriangle(baseIndex2, baseIndex2 + 2, baseIndex2 + 1);
+            mesh.addTriangle(baseIndex2, baseIndex2 + 3, baseIndex2 + 2);
         }
         return mesh;
     } 
@@ -198,23 +203,25 @@ public:
             float sinTheta = std::sin(theta);
             float cosTheta = std::cos(theta);
 
-            for (int lon = 0; lon <= longitudeDivisions; ++lon) {
-                float phi = 2 * M_PI * lon / longitudeDivisions;
-                float sinPhi = std::sin(phi);
-                float cosPhi = std::cos(phi);
+            for (int lon = 0; lon <= longitudeDivisions - 1; lon += 2) {
+                float phi1 = 2 * M_PI * lon / longitudeDivisions;
+                float phi2 = 2 * M_PI * (lon + 1) / longitudeDivisions;
 
-                vec4 position(
-                    radius * sinTheta * cosPhi,
-                    radius * sinTheta * sinPhi,
-                    radius * cosTheta,
-                    1.0f
-                );
+                float sinPhi1 = std::sin(phi1), cosPhi1 = std::cos(phi1);
+                float sinPhi2 = std::sin(phi2), cosPhi2 = std::cos(phi2);
 
-                vec4 normal = position;
-                normal.normalise();
-                normal[3] = 0.f;
+                vec4 position1(radius * sinTheta * cosPhi1, radius * sinTheta * sinPhi1, radius * cosTheta, 1.0f);
+                vec4 position2(radius * sinTheta * cosPhi2, radius * sinTheta * sinPhi2, radius * cosTheta, 1.0f);
 
-                mesh.addVertex(position, normal);
+                vec4 normal1 = position1;
+                vec4 normal2 = position2;
+                normal1.normalise();
+                normal2.normalise();
+                normal1[3] = 0.f;
+                normal2[3] = 0.f;
+
+                mesh.addVertex(position1, normal1);
+                mesh.addVertex(position2, normal2);
             }
         }
 
