@@ -157,7 +157,7 @@ public:
             {2, 3, 7, 6}
         };
 
-        for (int i = 0; i < 6; ++i) {
+        for (int i = 0; i < 6; i += 2) {
             int v0_1 = faceIndices[i][0], v1_1 = faceIndices[i][1], v2_1 = faceIndices[i][2], v3_1 = faceIndices[i][3];
             int v0_2 = faceIndices[i + 1][0], v1_2 = faceIndices[i + 1][1], v2_2 = faceIndices[i + 1][2], v3_2 = faceIndices[i + 1][3];
 
@@ -203,34 +203,36 @@ public:
             float sinTheta = std::sin(theta);
             float cosTheta = std::cos(theta);
 
-            for (int lon = 0; lon <= longitudeDivisions - 1; lon += 2) {
-                float phi1 = 2 * M_PI * lon / longitudeDivisions;
-                float phi2 = 2 * M_PI * (lon + 1) / longitudeDivisions;
+            for (int lon = 0; lon <= longitudeDivisions; ++lon) {
+                float phi = 2 * M_PI * lon / longitudeDivisions;
+                float sinPhi = std::sin(phi);
+                float cosPhi = std::cos(phi);
 
-                float sinPhi1 = std::sin(phi1), cosPhi1 = std::cos(phi1);
-                float sinPhi2 = std::sin(phi2), cosPhi2 = std::cos(phi2);
+                vec4 position(
+                    radius * sinTheta * cosPhi,
+                    radius * sinTheta * sinPhi,
+                    radius * cosTheta,
+                    1.0f
+                );
 
-                vec4 position1(radius * sinTheta * cosPhi1, radius * sinTheta * sinPhi1, radius * cosTheta, 1.0f);
-                vec4 position2(radius * sinTheta * cosPhi2, radius * sinTheta * sinPhi2, radius * cosTheta, 1.0f);
+                vec4 normal = position;
+                normal.normalise();
+                normal[3] = 0.f;
 
-                vec4 normal1 = position1;
-                vec4 normal2 = position2;
-                normal1.normalise();
-                normal2.normalise();
-                normal1[3] = 0.f;
-                normal2[3] = 0.f;
-
-                mesh.addVertex(position1, normal1);
-                mesh.addVertex(position2, normal2);
+                mesh.addVertex(position, normal);
             }
         }
 
-        // Create indices for triangles
+        int rowOffset = longitudeDivisions + 1;
+
         for (int lat = 0; lat < latitudeDivisions; ++lat) {
+            int baseLat = lat * rowOffset;
+            int baseLatNext = baseLat + rowOffset;
+
             for (int lon = 0; lon < longitudeDivisions; ++lon) {
-                int v0 = lat * (longitudeDivisions + 1) + lon;
+                int v0 = baseLat + lon;
                 int v1 = v0 + 1;
-                int v2 = (lat + 1) * (longitudeDivisions + 1) + lon;
+                int v2 = baseLatNext + lon;
                 int v3 = v2 + 1;
 
                 mesh.addTriangle(v0, v1, v2);
