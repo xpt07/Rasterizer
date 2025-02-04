@@ -55,26 +55,36 @@ void render(Renderer& renderer, Mesh* mesh, matrix& camera, Light& L) {
         Vertex t[3]; // Temporary array to store transformed triangle vertices
 
         // Transform each vertex of the triangle
-        for (unsigned int i = 0; i < 3; i++) {
-            t[i].p = p * mesh->vertices[ind.v[i]].p; // Apply transformations
-            t[i].p.divideW(); // Perspective division to normalize coordinates
+        t[0].p = p * mesh->vertices[ind.v[0]].p;
+        t[0].p.divideW();
+        t[0].normal = mesh->world * mesh->vertices[ind.v[0]].normal;
+        t[0].normal.normalise();
+        t[0].p[0] = (t[0].p[0] + 1.f) * 0.5f * static_cast<float>(renderer.canvas.getWidth());
+        t[0].p[1] = (t[0].p[1] + 1.f) * 0.5f * static_cast<float>(renderer.canvas.getHeight());
+        t[0].p[1] = renderer.canvas.getHeight() - t[0].p[1];
+        t[0].rgb = mesh->vertices[ind.v[0]].rgb;
 
-            // Transform normals into world space for accurate lighting
-            // no need for perspective correction as no shearing or non-uniform scaling
-            t[i].normal = mesh->world * mesh->vertices[ind.v[i]].normal; 
-            t[i].normal.normalise();
+        t[1].p = p * mesh->vertices[ind.v[1]].p;
+        t[1].p.divideW();
+        t[1].normal = mesh->world * mesh->vertices[ind.v[1]].normal;
+        t[1].normal.normalise();
+        t[1].p[0] = (t[1].p[0] + 1.f) * 0.5f * static_cast<float>(renderer.canvas.getWidth());
+        t[1].p[1] = (t[1].p[1] + 1.f) * 0.5f * static_cast<float>(renderer.canvas.getHeight());
+        t[1].p[1] = renderer.canvas.getHeight() - t[1].p[1];
+        t[1].rgb = mesh->vertices[ind.v[1]].rgb;
 
-            // Map normalized device coordinates to screen space
-            t[i].p[0] = (t[i].p[0] + 1.f) * 0.5f * static_cast<float>(renderer.canvas.getWidth());
-            t[i].p[1] = (t[i].p[1] + 1.f) * 0.5f * static_cast<float>(renderer.canvas.getHeight());
-            t[i].p[1] = renderer.canvas.getHeight() - t[i].p[1]; // Invert y-axis
-
-            // Copy vertex colours
-            t[i].rgb = mesh->vertices[ind.v[i]].rgb;
-        }
+        t[2].p = p * mesh->vertices[ind.v[2]].p;
+        t[2].p.divideW();
+        t[2].normal = mesh->world * mesh->vertices[ind.v[2]].normal;
+        t[2].normal.normalise();
+        t[2].p[0] = (t[2].p[0] + 1.f) * 0.5f * static_cast<float>(renderer.canvas.getWidth());
+        t[2].p[1] = (t[2].p[1] + 1.f) * 0.5f * static_cast<float>(renderer.canvas.getHeight());
+        t[2].p[1] = renderer.canvas.getHeight() - t[2].p[1];
+        t[2].rgb = mesh->vertices[ind.v[2]].rgb;
 
         // Clip triangles with Z-values outside [-1, 1]
-        if (fabs(t[0].p[2]) > 1.0f || fabs(t[1].p[2]) > 1.0f || fabs(t[2].p[2]) > 1.0f) continue;
+        bool clip = (fabs(t[0].p[2]) > 1.0f) | (fabs(t[1].p[2]) > 1.0f) | (fabs(t[2].p[2]) > 1.0f);
+        if (clip) continue;
 
         // Create a triangle object and render it
         triangle tri(t[0], t[1], t[2]);
@@ -133,8 +143,17 @@ void sceneTest() {
         if (renderer.canvas.keyPressed('E')) z += -0.1f;
 
         // Render each object in the scene
-        for (auto& m : scene)
-            render(renderer, m, camera, L);
+        size_t i = 0;
+        for (; i + 3 < scene.size(); i += 4) {
+            render(renderer, scene[i], camera, L);
+            render(renderer, scene[i + 1], camera, L);
+            render(renderer, scene[i + 2], camera, L);
+            render(renderer, scene[i + 3], camera, L);
+        }
+
+        // Handle the remainder
+        for (; i < scene.size(); ++i)
+            render(renderer, scene[i], camera, L);
 
         //handleImGui();
 
@@ -219,8 +238,17 @@ void scene1() {
             }
         }
 
-        for (auto& m : scene)
-            render(renderer, m, camera, L);
+        size_t i = 0;
+        for (; i + 3 < scene.size(); i += 4) {
+            render(renderer, scene[i], camera, L);
+            render(renderer, scene[i + 1], camera, L);
+            render(renderer, scene[i + 2], camera, L);
+            render(renderer, scene[i + 3], camera, L);
+        }
+
+        // Handle the remainder
+        for (; i < scene.size(); ++i)
+            render(renderer, scene[i], camera, L);
 
         //handleImGui();
 
@@ -288,23 +316,35 @@ void scene2() {
         // Move the sphere back and forth
         sphereOffset += sphereStep;
         sphere->world = matrix::makeTranslation(sphereOffset, 0.f, -6.f);
-        if (sphereOffset > 6.0f || sphereOffset < -6.0f) {
-            sphereStep *= -1.f;
-            if (++cycle % 2 == 0) {
-                end = std::chrono::high_resolution_clock::now();
-                std::cout << std::chrono::duration<double, std::milli>(end - start).count() << "\n";
-                if (cycle / 2 == 100) {
-                    std::cout << cycle / 2 << " done" << std::endl;
-                }
-                start = std::chrono::high_resolution_clock::now();
+
+        // Branchless sign flip for sphereStep
+        sphereStep *= 1.f - 2.f * (sphereOffset > 6.0f || sphereOffset < -6.0f);
+
+        // Cycle timing check
+        if (++cycle % 2 == 0) {
+            end = std::chrono::high_resolution_clock::now();
+            std::cout << std::chrono::duration<double, std::milli>(end - start).count() << "\n";
+
+            if (cycle / 2 == 100) {
+                std::cout << cycle / 2 << " done" << std::endl;
             }
+            start = std::chrono::high_resolution_clock::now();
         }
 
         if (renderer.canvas.keyPressed(VK_ESCAPE)) break;
 
-        for (auto& m : scene)
-            render(renderer, m, camera, L);
+        size_t i = 0;
+        for (; i + 3 < scene.size(); i += 4) {
+            render(renderer, scene[i], camera, L);
+            render(renderer, scene[i + 1], camera, L);
+            render(renderer, scene[i + 2], camera, L);
+            render(renderer, scene[i + 3], camera, L);
+        }
 
+        // Handle the remainder
+        for (; i < scene.size(); ++i)
+            render(renderer, scene[i], camera, L);
+          
         //handleImGui();
 
         renderer.present();
