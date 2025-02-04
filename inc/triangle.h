@@ -142,12 +142,16 @@ public:
     void getBounds(vec2D& minV, vec2D& maxV) {
         minV = vec2D(v[0].p);
         maxV = vec2D(v[0].p);
-        for (unsigned int i = 1; i < 3; i++) {
-            minV.x = min(minV.x, v[i].p[0]);
-            minV.y = min(minV.y, v[i].p[1]);
-            maxV.x = max(maxV.x, v[i].p[0]);
-            maxV.y = max(maxV.y, v[i].p[1]);
-        }
+
+        minV.x = min(minV.x, v[1].p[0]);
+        minV.y = min(minV.y, v[1].p[1]);
+        maxV.x = max(maxV.x, v[1].p[0]);
+        maxV.y = max(maxV.y, v[1].p[1]);
+
+        minV.x = min(minV.x, v[2].p[0]);
+        minV.y = min(minV.y, v[2].p[1]);
+        maxV.x = max(maxV.x, v[2].p[0]);
+        maxV.y = max(maxV.y, v[2].p[1]);
     }
 
     // Compute the 2D bounds of the triangle, clipped to the canvas
@@ -171,7 +175,13 @@ public:
         getBounds(minV, maxV);
 
         for (int y = (int)minV.y; y < (int)maxV.y; y++) {
-            for (int x = (int)minV.x; x < (int)maxV.x; x++) {
+            for (int x = (int)minV.x; x + 3 < (int)maxV.x; x += 4) {
+                canvas.draw(x, y, 255, 0, 0);
+                canvas.draw(x + 1, y, 255, 0, 0);
+                canvas.draw(x + 2, y, 255, 0, 0);
+                canvas.draw(x + 3, y, 255, 0, 0);
+            }
+            for (int x = (int)maxV.x & ~3; x < (int)maxV.x; x++) {
                 canvas.draw(x, y, 255, 0, 0);
             }
         }
