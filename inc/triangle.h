@@ -79,6 +79,7 @@ public:
 
         // Branchless check for barycentric coordinates
         return (alpha >= 0.f) & (beta >= 0.f) & (gamma >= 0.f);
+
     }
 
     // Template function to interpolate values using barycentric coordinates

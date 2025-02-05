@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 #include "vec4.h"
 
 // Matrix class for 4x4 transformation matrices
@@ -60,7 +61,7 @@ public:
         return ret;
     }
 
-    // Create a perspective projection matrix
+    // Create a memoised perspective projection matrix
     // Input Variables:
     // - fov: Field of view in radians
     // - aspect: Aspect ratio of the viewport
@@ -68,6 +69,9 @@ public:
     // - f: Far clipping plane
     // Returns the perspective matrix
     static matrix makePerspective(float fov, float aspect, float n, float f) {
+        std::string key = generateKey("perspective", fov, aspect, n, f);
+        if (matrixCache.find(key) != matrixCache.end()) return matrixCache[key];
+        
         matrix m;
         m.zero();
         float tanHalfFov = std::tan(fov / 2.0f);
@@ -77,61 +81,83 @@ public:
         m.a[10] = -f / (f - n);
         m.a[11] = -(f * n) / (f - n);
         m.a[14] = -1.0f;
+
+        matrixCache[key] = m;
         return m;
     }
 
-    // Create a translation matrix
+    // Create a memoised translation matrix
     // Input Variables:
     // - tx, ty, tz: Translation amounts along the X, Y, and Z axes
     // Returns the translation matrix
     static matrix makeTranslation(float tx, float ty, float tz) {
+        std::string key = generateKey("translation", tx, ty, tz);
+        if (matrixCache.find(key) != matrixCache.end()) return matrixCache[key];
+
         matrix m;
         m.identity();
         m.a[3] = tx;
         m.a[7] = ty;
         m.a[11] = tz;
+
+        matrixCache[key] = m;
         return m;
     }
 
-    // Create a rotation matrix around the Z-axis
+    // Create a memoised rotation matrix around the Z-axis
     // Input Variables:
     // - aRad: Rotation angle in radians
     // Returns the rotation matrix
     static matrix makeRotateZ(float aRad) {
+        std::string key = generateKey("rotateZ", aRad, 0, 0);
+        if (matrixCache.find(key) != matrixCache.end()) return matrixCache[key];
+
         matrix m;
         m.identity();
         m.a[0] = std::cos(aRad);
         m.a[1] = -std::sin(aRad);
         m.a[4] = std::sin(aRad);
         m.a[5] = std::cos(aRad);
+
+        matrixCache[key] = m;
         return m;
     }
 
-    // Create a rotation matrix around the X-axis
+    // Create a memoised rotation matrix around the X-axis
     // Input Variables:
     // - aRad: Rotation angle in radians
     // Returns the rotation matrix
     static matrix makeRotateX(float aRad) {
+        std::string key = generateKey("rotateX", aRad, 0, 0);
+        if (matrixCache.find(key) != matrixCache.end()) return matrixCache[key];
+        
         matrix m;
         m.identity();
         m.a[5] = std::cos(aRad);
         m.a[6] = -std::sin(aRad);
         m.a[9] = std::sin(aRad);
         m.a[10] = std::cos(aRad);
+
+        matrixCache[key] = m;
         return m;
     }
 
-    // Create a rotation matrix around the Y-axis
+    // Create a memoised rotation matrix around the Y-axis
     // Input Variables:
     // - aRad: Rotation angle in radians
     // Returns the rotation matrix
     static matrix makeRotateY(float aRad) {
+        std::string key = generateKey("rotateY", aRad, 0, 0);
+        if (matrixCache.find(key) != matrixCache.end()) return matrixCache[key];
+
         matrix m;
         m.identity();
         m.a[0] = std::cos(aRad);
         m.a[2] = std::sin(aRad);
         m.a[8] = -std::sin(aRad);
         m.a[10] = std::cos(aRad);
+
+        matrixCache[key] = m;
         return m;
     }
 
@@ -143,17 +169,22 @@ public:
         return matrix::makeRotateX(x) * matrix::makeRotateY(y) * matrix::makeRotateZ(z);
     }
 
-    // Create a scaling matrix
+    // Create a memoised scaling matrix
     // Input Variables:
     // - s: Scaling factor
     // Returns the scaling matrix
     static matrix makeScale(float s) {
+        std::string key = generateKey("scale", s, 0, 0);
+        if (matrixCache.find(key) != matrixCache.end()) return matrixCache[key];
+
         matrix m;
         s = max(s, 0.01f); // Ensure scaling factor is not too small
         m.identity();
         m.a[0] = s;
         m.a[5] = s;
         m.a[10] = s;
+
+        matrixCache[key] = m;
         return m;
     }
 
@@ -170,6 +201,13 @@ public:
     }
 
 private:
+    static std::unordered_map<std::string, matrix> matrixCache;
+
+    // Generate a unique key for the cache
+    static std::string generateKey(const std::string& type, float v1, float v2, float v3, float v4 = 0) {
+        return type + "_" + std::to_string(v1) + "_" + std::to_string(v2) + "_" + std::to_string(v3) + "_" + std::to_string(v4);
+    }
+
     // Set all elements of the matrix to 0
     void zero() {
         for (unsigned int i = 0; i < 16; i++)
@@ -186,4 +224,4 @@ private:
     }
 };
 
-
+std::unordered_map<std::string, matrix> matrix::matrixCache;
