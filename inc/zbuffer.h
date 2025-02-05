@@ -9,6 +9,7 @@ template<std::floating_point T> // Restricts T to be a floating-point type
 class Zbuffer {
     T* buffer;                  // Pointer to the buffer storing depth values
     unsigned int width, height; // Dimensions of the Z-buffer
+    std::unordered_map<unsigned int, T> zCache; // Memoisation cache for depth values
 
 public:
     // Constructor to initialize a Z-buffer with the given width and height.
@@ -44,12 +45,27 @@ public:
         return buffer[(y * width) + x]; // Convert 2D coordinates to 1D index
     }
 
+    // Memoised depth test - avoids unnecessary updates.
+    bool shouldUpdate(unsigned int x, unsigned int y, T newDepth) {
+        unsigned int index = (y * width) + x;
+
+        // Check if we have seen this pixel before
+        if (zCache.find(index) != zCache.end()) {
+            if (zCache[index] <= newDepth) return false; // No need to update
+        }
+
+        zCache[index] = newDepth; // Store new depth
+        return true;
+    }
+
     // Clears the Z-buffer by setting all depth values to 1.0f,
     // which represents the farthest possible depth.
     void clear() {
         for (unsigned int i = 0; i < width * height; i++) {
             buffer[i] = 1.0f; // Reset each depth value
         }
+
+        zCache.clear(); // Clear memoisation cache
     }
 
     // Destructor to clean up memory allocated for the Z-buffer.
