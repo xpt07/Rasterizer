@@ -118,7 +118,7 @@ public:
                     vec4 normal = interpolate(beta, gamma, alpha, v[0].normal, v[1].normal, v[2].normal);
                     normal.normalise();
                     // Perform Z-buffer test and apply shading
-                    if (renderer.zbuffer.shouldUpdate(x, y, depth) && depth > 0.01f) {
+                    if (renderer.zbuffer(x, y) > depth && depth > 0.01f) {
                         // typical shader begin
                         L.omega_i.normalise();
                         float dot = max(vec4::dot(L.omega_i, normal), 0.0f);
