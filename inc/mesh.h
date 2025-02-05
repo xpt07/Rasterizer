@@ -157,27 +157,20 @@ public:
             {2, 3, 7, 6}
         };
 
-        for (int i = 0; i < 6; i += 2) {
-            int v0_1 = faceIndices[i][0], v1_1 = faceIndices[i][1], v2_1 = faceIndices[i][2], v3_1 = faceIndices[i][3];
-            int v0_2 = faceIndices[i + 1][0], v1_2 = faceIndices[i + 1][1], v2_2 = faceIndices[i + 1][2], v3_2 = faceIndices[i + 1][3];
-
-            mesh.addVertex(positions[v0_1], normals[i]);
-            mesh.addVertex(positions[v1_1], normals[i]);
-            mesh.addVertex(positions[v2_1], normals[i]);
-            mesh.addVertex(positions[v3_1], normals[i]);
-
-            int baseIndex1 = i * 4;
-            mesh.addTriangle(baseIndex1, baseIndex1 + 2, baseIndex1 + 1);
-            mesh.addTriangle(baseIndex1, baseIndex1 + 3, baseIndex1 + 2);
-
-            mesh.addVertex(positions[v0_2], normals[i + 1]);
-            mesh.addVertex(positions[v1_2], normals[i + 1]);
-            mesh.addVertex(positions[v2_2], normals[i + 1]);
-            mesh.addVertex(positions[v3_2], normals[i + 1]);
-
-            int baseIndex2 = (i + 1) * 4;
-            mesh.addTriangle(baseIndex2, baseIndex2 + 2, baseIndex2 + 1);
-            mesh.addTriangle(baseIndex2, baseIndex2 + 3, baseIndex2 + 2);
+        for (int i = 0; i < 6; ++i) {
+            int v0 = faceIndices[i][0];
+            int v1 = faceIndices[i][1];
+            int v2 = faceIndices[i][2];
+            int v3 = faceIndices[i][3];
+            // Add vertices with their normals
+            mesh.addVertex(positions[v0], normals[i]);
+            mesh.addVertex(positions[v1], normals[i]);
+            mesh.addVertex(positions[v2], normals[i]);
+            mesh.addVertex(positions[v3], normals[i]);
+            // Add two triangles for the face
+            int baseIndex = i * 4;
+            mesh.addTriangle(baseIndex, baseIndex + 2, baseIndex + 1);
+            mesh.addTriangle(baseIndex, baseIndex + 3, baseIndex + 2);
         }
         return mesh;
     } 
@@ -226,13 +219,10 @@ public:
         int rowOffset = longitudeDivisions + 1;
 
         for (int lat = 0; lat < latitudeDivisions; ++lat) {
-            int baseLat = lat * rowOffset;
-            int baseLatNext = baseLat + rowOffset;
-
             for (int lon = 0; lon < longitudeDivisions; ++lon) {
-                int v0 = baseLat + lon;
+                int v0 = lat * (longitudeDivisions + 1) + lon;
                 int v1 = v0 + 1;
-                int v2 = baseLatNext + lon;
+                int v2 = (lat + 1) * (longitudeDivisions + 1) + lon;
                 int v3 = v2 + 1;
 
                 mesh.addTriangle(v0, v1, v2);

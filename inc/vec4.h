@@ -104,10 +104,8 @@ public:
     // This operation does not affect the W component.
     void normalise() {
         float length = std::sqrt(x * x + y * y + z * z);
-        float invLength = 1.0f / length; // Compute reciprocal once and multiply
-
-        x *= invLength;
-        y *= invLength;
-        z *= invLength;
+        x /= length;
+        y /= length;
+        z /= length;
     }
 };
