@@ -35,14 +35,6 @@ public:
     std::vector<Vertex> vertices;       // List of vertices in the mesh
     std::vector<triIndices> triangles;  // List of triangles in the mesh
 
-    // Memoisation cache for generated meshes
-    static std::unordered_map<std::string, Mesh> meshCache;
-
-    // Generates a unique key for memoisation
-    static std::string generateKey(const std::string& type, float v1, float v2, float v3 = 0, int v4 = 0) {
-        return type + "_" + std::to_string(v1) + "_" + std::to_string(v2) + "_" + std::to_string(v3) + "_" + std::to_string(v4);
-    }
-
     // Set the uniform color and reflection coefficients for the mesh
     // Input Variables:
     // - _c: Uniform color
@@ -96,9 +88,6 @@ public:
     // - x2, y2: Coordinates of the opposite corner
     // Returns a Mesh object representing the rectangle
     static Mesh makeRectangle(float x1, float y1, float x2, float y2) {
-        std::string key = generateKey("rectangle", x1, y1, x2, y2);
-        if (meshCache.find(key) != meshCache.end()) return meshCache[key];
-
         Mesh mesh;
         mesh.vertices.clear();
         mesh.triangles.clear();
@@ -125,7 +114,6 @@ public:
         mesh.addTriangle(0, 2, 1);
         mesh.addTriangle(0, 3, 2);
 
-        meshCache[key] = mesh;
         return mesh;
     }
 
@@ -134,9 +122,6 @@ public:
     // - size: Length of one side of the cube
     // Returns a Mesh object representing the cube
     static Mesh makeCube(float size) {
-        std::string key = generateKey("cube", size, 0);
-        if (meshCache.find(key) != meshCache.end()) return meshCache[key];
-
         Mesh mesh;
         float halfSize = size / 2.0f;
 
@@ -189,8 +174,6 @@ public:
             mesh.addTriangle(baseIndex, baseIndex + 2, baseIndex + 1);
             mesh.addTriangle(baseIndex, baseIndex + 3, baseIndex + 2);
         }
-
-        meshCache[key] = mesh;
         return mesh;
     } 
 
@@ -201,9 +184,6 @@ public:
     // - longitudeDivisions: Number of divisions along the longitude
     // Returns a Mesh object representing the sphere
     static Mesh makeSphere(float radius, int latitudeDivisions, int longitudeDivisions) {
-        std::string key = generateKey("sphere", radius, latitudeDivisions, longitudeDivisions);
-        if (meshCache.find(key) != meshCache.end()) return meshCache[key];
-
         Mesh mesh;
         if (latitudeDivisions < 2 || longitudeDivisions < 3) {
             throw std::invalid_argument("Latitude divisions must be >= 2 and longitude divisions >= 3");
@@ -250,11 +230,6 @@ public:
                 mesh.addTriangle(v1, v3, v2);
             }
         }
-
-        meshCache[key] = mesh;
         return mesh;
     }
 };
-
-// Define static cache
-std::unordered_map<std::string, Mesh> Mesh::meshCache;
