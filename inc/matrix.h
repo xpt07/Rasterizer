@@ -178,7 +178,7 @@ public:
         if (matrixCache.find(key) != matrixCache.end()) return matrixCache[key];
 
         matrix m;
-        s = std::max(s, 0.01f); // Ensure scaling factor is not too small
+        s = max(s, 0.01f); // Ensure scaling factor is not too small
         m.identity();
         m.a[0] = s;
         m.a[5] = s;
