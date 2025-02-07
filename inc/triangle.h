@@ -27,7 +27,7 @@ public:
     void display() { std::cout << x << '\t' << y << std::endl; }
 
     // Overloaded subtraction operator for vector subtraction
-    vec2D operator- (vec2D& v) {
+    vec2D operator- (const vec2D& v) const {
         vec2D q;
         q.x = x - v.x;
         q.y = y - v.y;
@@ -64,6 +64,11 @@ public:
         vec2D e = v2 - v1;
         vec2D q = p - v1;
         return q.y * e.x - q.x * e.y;
+    }
+
+    // Compute cross product (used for barycentric calculations)
+    float getCross(const vec2D& a, const vec2D& b) {
+        return a.x * b.y - a.y * b.x;
     }
 
     // Compute barycentric coordinates for a given point
@@ -105,33 +110,79 @@ public:
         // Skip very small triangles
         if (area < 1.f) return;
 
+        // Compute edges
+        vec2D e[3];
+        e[0] = vec2D(v[1].p - v[0].p);
+        e[1] = vec2D(v[2].p - v[1].p);
+        e[2] = vec2D(v[0].p - v[2].p);
+
+        float invArea = 1.f / area;
+
+        // Calculate starting barycentric coordinates
+        vec2D p0 = vec2D(minV);
+        float alpha0 = getCross(e[0], p0 - vec2D(v[1].p)) * invArea;
+        float beta0 = getCross(e[1], p0 - vec2D(v[2].p)) * invArea;
+        float gamma0 = getCross(e[2], p0 - vec2D(v[0].p)) * invArea;
+
+        // Calculate horizontal and vertical increments
+        float deltaAlphaX = -e[0].y * invArea, deltaAlphaY = e[0].x * invArea;
+        float deltaBetaX = -e[1].y * invArea, deltaBetaY = e[1].x * invArea;
+        float deltaGammaX = -e[2].y * invArea, deltaGammaY = e[2].x * invArea;
+
+        float alphaRow = alpha0, betaRow = beta0, gammaRow = gamma0;
+
+        const float bias = -0.0001f; // Slightly favor triangle inclusion
+
         // Iterate over the bounding box and check each pixel
-        for (int y = (int)(minV.y); y < (int)ceil(maxV.y); y++) {
-            for (int x = (int)(minV.x); x < (int)ceil(maxV.x); x++) {
-                float alpha, beta, gamma;
-                // Check if the pixel lies inside the triangle
-                if (getCoordinates(vec2D((float)x, (float)y), alpha, beta, gamma)) {
-                    // Interpolate color, depth, and normals
-                    colour c = interpolate(beta, gamma, alpha, v[0].rgb, v[1].rgb, v[2].rgb);
-                    c.clampColour();
+        for (int y = (int)floor(minV.y); y < (int)ceil(maxV.y); y++) {
+
+            int bufferIndex = y * renderer.canvas.getWidth();
+
+            float alpha = alphaRow;
+            float beta = betaRow;
+            float gamma = gammaRow;
+
+            for (int x = (int)floor(minV.x); x < (int)ceil(maxV.x); x++) {
+
+                if ((alpha > bias || (alpha == 0.f && e[0].y > 0)) &&
+                    (beta > bias || (beta == 0.f && e[1].y > 0)) &&
+                    (gamma > bias || (gamma == 0.f && e[2].y > 0))) {
+
+                    // Interpolate depth
                     float depth = interpolate(beta, gamma, alpha, v[0].p[2], v[1].p[2], v[2].p[2]);
-                    vec4 normal = interpolate(beta, gamma, alpha, v[0].normal, v[1].normal, v[2].normal);
-                    normal.normalise();
-                    // Perform Z-buffer test and apply shading
-                    if (renderer.zbuffer(x, y) > depth && depth > 0.01f) {
-                        // typical shader begin
+
+                    if (depth > 0.01f && renderer.getDepth(bufferIndex + x) > depth) {
+                        // Interpolate color and normal
+                        colour c = interpolate(beta, gamma, alpha, v[0].rgb, v[1].rgb, v[2].rgb);
+                        c.clampColour();
+                        vec4 normal = interpolate(beta, gamma, alpha, v[0].normal, v[1].normal, v[2].normal);
+                        normal.normalise();
+
+                        // Apply shading
                         L.omega_i.normalise();
                         float dot = max(vec4::dot(L.omega_i, normal), 0.0f);
-                        colour a = (c * kd) * (L.L * dot + (L.ambient * kd));
-                        // typical shader end
-                        unsigned char r, g, b;
-                        a.toRGB(r, g, b);
-                        renderer.canvas.draw(x, y, r, g, b);
-                        renderer.zbuffer(x, y) = depth;
+                        colour shaded = (c * kd) * (L.L * dot + (L.ambient * ka));
 
+                        // Convert to RGB
+                        unsigned char r, g, b;
+                        shaded.toRGB(r, g, b);
+
+                        // Draw pixel and update depth buffer
+                        renderer.canvas.draw(x, y, r, g, b);
+                        renderer.setDepth(bufferIndex + x, depth);
                     }
                 }
+
+                // Increment barycentric coordinates in X direction
+                alpha += deltaAlphaX;
+                beta += deltaBetaX;
+                gamma += deltaGammaX;
             }
+
+            // Increment barycentric coordinates in Y direction
+            alphaRow += deltaAlphaY;
+            betaRow += deltaBetaY;
+            gammaRow += deltaGammaY;
         }
     }
 

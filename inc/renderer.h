@@ -34,4 +34,23 @@ public:
     void present() {
         canvas.present(); // Display the rendered frame
     }
+
+    // Retrieves the depth value at the specified buffer index.
+    // Ensures safe access to the Z-buffer.
+    // Input Variables:
+    // - index: 1D index in the Z-buffer.
+    // Returns the depth value at the given index.
+    float getDepth(unsigned int index) const {
+        if (index < zbuffer.getSize()) {  // Ensure index is within bounds
+            return zbuffer.getBuffer()[index];
+        }
+        return 1.0f; // Default depth if out of bounds
+    }
+
+    // Sets the depth value at the specified index in the Z-buffer.
+    void setDepth(unsigned int index, float depth) {
+        if (index < zbuffer.getSize()) {  // Ensure index is within bounds
+            zbuffer.getWritableBuffer()[index] = depth;
+        }
+    }
 };

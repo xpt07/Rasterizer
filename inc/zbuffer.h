@@ -52,6 +52,20 @@ public:
         }
     }
 
+    // Exposes the raw buffer pointer for safe retrieval.
+    const T* getBuffer() const {
+        return buffer;
+    }
+
+    T* getWritableBuffer() {
+        return buffer;
+    }
+
+    // Returns the total size of the Z-buffer.
+    unsigned int getSize() const {
+        return width * height;
+    }
+
     // Destructor to clean up memory allocated for the Z-buffer.
     ~Zbuffer() {
         delete[] buffer; // Free the allocated memory

@@ -321,9 +321,9 @@ int main() {
     //Renderer renderer;
     //ImGuiManager::Initialize(renderer.canvas.getHWND(), renderer.canvas.getDev(), renderer.canvas.getDevContext());
 
-    scene1();
+    //scene1();
     //scene2();
-    //sceneTest();
+    sceneTest();
 
     return 0;
 }
