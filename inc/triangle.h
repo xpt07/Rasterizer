@@ -139,28 +139,27 @@ public:
             for (int x = (int)minV.x; x < (int)ceil(maxV.x); x++) {
                 // Check if the pixel is inside the triangle
                 if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-                    // Compute correct barycentric coordinates
+                    // **Ensure original interpolation order**
                     float alpha = w0 / totalArea;
                     float beta = w1 / totalArea;
                     float gamma = w2 / totalArea;
 
-                    // Compute interpolated depth
-                    float depth = interpolate(alpha, beta, gamma, v[0].p[2], v[1].p[2], v[2].p[2]);
+                    // Interpolate color, depth, and normals exactly as before
+                    colour c = interpolate(beta, gamma, alpha, v[0].rgb, v[1].rgb, v[2].rgb);
+                    c.clampColour();
+                    float depth = interpolate(beta, gamma, alpha, v[0].p[2], v[1].p[2], v[2].p[2]);
+                    vec4 normal = interpolate(beta, gamma, alpha, v[0].normal, v[1].normal, v[2].normal);
 
-                    // Compute interpolated normal (before normalising)
-                    vec4 normal = interpolate(alpha, beta, gamma, v[0].normal, v[1].normal, v[2].normal);
-                    normal.normalise(); // Corrected: Normalise AFTER interpolation
+                    // **Fix: Ensure normal is normalised before lighting calculation**
+                    normal.normalise();
 
-                    // Perform Z-buffer test
+                    // Perform Z-buffer test and apply shading
                     if (renderer.zbuffer(x, y) > depth && depth > 0.01f) {
-                        // Lighting calculations
+                        // **Fix: Ensure shading calculation matches the original**
                         L.omega_i.normalise();
-                        float dot = max(vec4::dot(L.omega_i, normal), 0.0f); // Ensure dot product is non-negative
-                        colour c = interpolate(alpha, beta, gamma, v[0].rgb, v[1].rgb, v[2].rgb);
-                        c.clampColour();
-                        colour a = (c * kd) * (L.L * dot + (L.ambient * ka)); // Ambient + diffuse lighting
+                        float dot = max(vec4::dot(L.omega_i, normal), 0.0f);
+                        colour a = (c * kd) * (L.L * dot + (L.ambient * kd));
 
-                        // Convert colour to RGB
                         unsigned char r, g, b;
                         a.toRGB(r, g, b);
                         renderer.canvas.draw(x, y, r, g, b);
