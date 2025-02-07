@@ -57,6 +57,11 @@ public:
         area = abs(e1.x * e2.y - e1.y * e2.x);
     }
 
+    // Compute edge function
+    inline float edgeFunction(const vec2D& a, const vec2D& b, const vec2D& p) const {
+        return (p.x - a.x) * (b.y - a.y) - (p.y - a.y) * (b.x - a.x);
+    }
+
     // Helper function to compute the cross product for barycentric coordinates
     // Input Variables:
     // - v1, v2: Edges defining the vector
@@ -106,33 +111,72 @@ public:
         // Skip very small triangles
         if (area < 1.f) return;
 
+        // Convert vertices to vec2D for easier calculations
+        vec2D p0(v[0].p), p1(v[1].p), p2(v[2].p);
+
+        // Compute area in **integer space** for stable barycentric interpolation
+        float totalArea = edgeFunction(p0, p1, p2);
+
+        // Precompute edge function values at the top-left corner of the bounding box
+        float w0_row = edgeFunction(p1, p2, minV);
+        float w1_row = edgeFunction(p2, p0, minV);
+        float w2_row = edgeFunction(p0, p1, minV);
+
+        // Compute correct per-pixel increments
+        float w0_dx = -(p1.y - p2.y);
+        float w0_dy = (p1.x - p2.x);
+        float w1_dx = -(p2.y - p0.y);
+        float w1_dy = (p2.x - p0.x);
+        float w2_dx = -(p0.y - p1.y);
+        float w2_dy = (p0.x - p1.x);
+
         // Iterate over the bounding box and check each pixel
-        for (int y = (int)(minV.y); y < (int)ceil(maxV.y); y++) {
-            for (int x = (int)(minV.x); x < (int)ceil(maxV.x); x++) {
-                float alpha, beta, gamma;
-                // Check if the pixel lies inside the triangle
-                if (getCoordinates(vec2D((float)x, (float)y), alpha, beta, gamma)) {
-                    // Interpolate color, depth, and normals
-                    colour c = interpolate(beta, gamma, alpha, v[0].rgb, v[1].rgb, v[2].rgb);
-                    c.clampColour();
-                    float depth = interpolate(beta, gamma, alpha, v[0].p[2], v[1].p[2], v[2].p[2]);
-                    vec4 normal = interpolate(beta, gamma, alpha, v[0].normal, v[1].normal, v[2].normal);
-                    normal.normalise();
-                    // Perform Z-buffer test and apply shading
+        for (int y = (int)minV.y; y < (int)ceil(maxV.y); y++) {
+            float w0 = w0_row;
+            float w1 = w1_row;
+            float w2 = w2_row;
+
+            for (int x = (int)minV.x; x < (int)ceil(maxV.x); x++) {
+                // Check if the pixel is inside the triangle
+                if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
+                    // Compute correct barycentric coordinates
+                    float alpha = w0 / totalArea;
+                    float beta = w1 / totalArea;
+                    float gamma = w2 / totalArea;
+
+                    // Compute interpolated depth
+                    float depth = interpolate(alpha, beta, gamma, v[0].p[2], v[1].p[2], v[2].p[2]);
+
+                    // Compute interpolated normal (before normalising)
+                    vec4 normal = interpolate(alpha, beta, gamma, v[0].normal, v[1].normal, v[2].normal);
+                    normal.normalise(); // Corrected: Normalise AFTER interpolation
+
+                    // Perform Z-buffer test
                     if (renderer.zbuffer(x, y) > depth && depth > 0.01f) {
-                        // typical shader begin
+                        // Lighting calculations
                         L.omega_i.normalise();
-                        float dot = max(vec4::dot(L.omega_i, normal), 0.0f);
-                        colour a = (c * kd) * (L.L * dot + (L.ambient * kd));
-                        // typical shader end
+                        float dot = max(vec4::dot(L.omega_i, normal), 0.0f); // Ensure dot product is non-negative
+                        colour c = interpolate(alpha, beta, gamma, v[0].rgb, v[1].rgb, v[2].rgb);
+                        c.clampColour();
+                        colour a = (c * kd) * (L.L * dot + (L.ambient * ka)); // Ambient + diffuse lighting
+
+                        // Convert colour to RGB
                         unsigned char r, g, b;
                         a.toRGB(r, g, b);
                         renderer.canvas.draw(x, y, r, g, b);
                         renderer.zbuffer(x, y) = depth;
-                        
                     }
                 }
+                // Increment edge function values for next pixel in x direction
+                w0 += w0_dx;
+                w1 += w1_dx;
+                w2 += w2_dx;
             }
+
+            // Increment edge function values for next row in y direction
+            w0_row += w0_dy;
+            w1_row += w1_dy;
+            w2_row += w2_dy;
         }
     }
 
