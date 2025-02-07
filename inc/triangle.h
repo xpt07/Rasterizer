@@ -5,6 +5,7 @@
 #include "renderer.h"
 #include "light.h"
 #include <iostream>
+#include <immintrin.h>
 
 // Simple support class for a 2D vector
 class vec2D {
@@ -91,7 +92,7 @@ public:
         return (a1 * alpha) + (a2 * beta) + (a3 * gamma);
     }
 
-    // Draw the triangle on the canvas
+    // Draw the triangle on the canvas using SIMD
     // Input Variables:
     // - renderer: Renderer object for drawing
     // - L: Light object for shading calculations
