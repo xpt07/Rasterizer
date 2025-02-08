@@ -119,7 +119,7 @@ public:
         float invArea = 1.f / area;
 
         // Calculate starting barycentric coordinates
-        vec2D p0 = vec2D(minV);
+        vec2D p0 = vec2D((int)floor(minV.x), (int)floor(minV.y));
         float alpha0 = getCross(e[0], p0 - vec2D(v[1].p)) * invArea;
         float beta0 = getCross(e[1], p0 - vec2D(v[2].p)) * invArea;
         float gamma0 = getCross(e[2], p0 - vec2D(v[0].p)) * invArea;
@@ -131,8 +131,6 @@ public:
 
         float alphaRow = alpha0, betaRow = beta0, gammaRow = gamma0;
 
-        const float bias = -0.0001f; // Slightly favor triangle inclusion
-
         // Iterate over the bounding box and check each pixel
         for (int y = (int)floor(minV.y); y < (int)ceil(maxV.y); y++) {
 
@@ -143,10 +141,7 @@ public:
             float gamma = gammaRow;
 
             for (int x = (int)floor(minV.x); x < (int)ceil(maxV.x); x++) {
-
-                if ((alpha > bias || (alpha == 0.f && e[0].y > 0)) &&
-                    (beta > bias || (beta == 0.f && e[1].y > 0)) &&
-                    (gamma > bias || (gamma == 0.f && e[2].y > 0))) {
+                if (alpha >= 0.f && beta >= 0.f && gamma >= 0.f) {
 
                     // Interpolate depth
                     float depth = interpolate(beta, gamma, alpha, v[0].p[2], v[1].p[2], v[2].p[2]);
