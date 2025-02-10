@@ -351,6 +351,112 @@ void scene2() {
         delete m;
 }
 
+void scene3() {
+    Renderer renderer;
+    matrix camera = matrix::makeIdentity();
+    Light L{ vec4(0.f, 1.f, 1.f, 0.f), colour(1.0f, 1.0f, 1.0f), colour(0.1f, 0.1f, 0.1f) };
+
+    std::vector<Mesh*> scene;
+    struct rRot { float x; float y; float z; }; // Rotation storage
+    std::vector<rRot> rotations;
+    RandomNumberGenerator& rng = RandomNumberGenerator::getInstance();
+
+    // Create a 10x10 grid of rotating cubes
+    for (unsigned int y = 0; y < 10; y++) {
+        for (unsigned int x = 0; x < 10; x++) {
+            Mesh* m = new Mesh();
+            *m = Mesh::makeCube(1.f);
+            scene.push_back(m);
+            m->world = matrix::makeTranslation(-9.0f + (static_cast<float>(x) * 2.f),
+                9.0f - (static_cast<float>(y) * 2.f),
+                -10.f);
+            rRot r{ rng.getRandomFloat(-.1f, .1f), rng.getRandomFloat(-.1f, .1f), rng.getRandomFloat(-.1f, .1f) };
+            rotations.push_back(r);
+        }
+    }
+
+    // Create a high-polygon sphere for stress testing
+    Mesh* sphere = new Mesh();
+    *sphere = Mesh::makeSphere(1.5f, 30, 50);  // Increased subdivisions for complexity
+    scene.push_back(sphere);
+    float sphereOffset = -8.f;
+    float sphereStep = 0.2f;
+    sphere->world = matrix::makeTranslation(sphereOffset, 0.f, -8.f);
+
+    // Camera movement variables
+    float zoffset = 12.0f;
+    float cameraStep = -0.05f;
+
+    auto start = std::chrono::high_resolution_clock::now();
+    std::chrono::time_point<std::chrono::high_resolution_clock> end;
+    int cycle = 0;
+
+    bool running = true;
+    while (running) {
+        renderer.canvas.checkInput();
+        renderer.clear();
+
+        // Clear the render target
+        float ClearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f }; // RGBA
+        renderer.canvas.getDevContext()->ClearRenderTargetView(renderer.canvas.getRenderTargetView(), ClearColor);
+        renderer.canvas.getDevContext()->Draw(3, 0);
+
+        // Update camera position dynamically
+        camera = matrix::makeTranslation(0, 0, -zoffset) * matrix::makeRotateY(zoffset * 0.02f);
+
+        // Rotate each cube randomly
+        for (unsigned int i = 0; i < rotations.size(); i++) {
+            scene[i]->world = scene[i]->world * matrix::makeRotateXYZ(rotations[i].x, rotations[i].y, rotations[i].z);
+        }
+
+        // Move the sphere back and forth while rotating
+        sphereOffset += sphereStep;
+        sphere->world = matrix::makeTranslation(sphereOffset, 0.f, -8.f) * matrix::makeRotateXYZ(0.1f, 0.1f, 0.1f);
+
+        // Reverse sphere direction at limits
+        if (sphereOffset > 8.0f || sphereOffset < -8.0f) {
+            sphereStep *= -1.f;
+        }
+
+        // Move camera dynamically
+        zoffset += cameraStep;
+        if (zoffset < -15.f || zoffset > 12.f) {
+            cameraStep *= -1.f;
+
+            // Only print timing when a **full back-and-forth movement cycle** is completed
+            if (++cycle % 2 == 0) {
+                end = std::chrono::high_resolution_clock::now();
+                std::cout << std::chrono::duration<double, std::milli>(end - start).count() << "\n";
+                if (cycle / 2 == 100) {
+                    std::cout << cycle / 2 << " done" << std::endl;
+                }
+                start = std::chrono::high_resolution_clock::now();
+            }
+        }
+
+        if (renderer.canvas.keyPressed(VK_ESCAPE)) break;
+
+        size_t i = 0;
+        for (; i + 3 < scene.size(); i += 4) {
+            render(renderer, scene[i], camera, L);
+            render(renderer, scene[i + 1], camera, L);
+            render(renderer, scene[i + 2], camera, L);
+            render(renderer, scene[i + 3], camera, L);
+        }
+
+        // Handle the remainder
+        for (; i < scene.size(); ++i)
+            render(renderer, scene[i], camera, L);
+
+
+        renderer.present();
+    }
+
+    // Cleanup
+    for (auto& m : scene)
+        delete m;
+}
+
 // Entry point of the application
 // No input variables
 int main() {
@@ -359,8 +465,8 @@ int main() {
     //ImGuiManager::Initialize(renderer.canvas.getHWND(), renderer.canvas.getDev(), renderer.canvas.getDevContext());
 
     //scene1();
-    scene2();
-    //sceneTest();
+    //scene2();
+    scene3();
 
     return 0;
 }
